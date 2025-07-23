@@ -92,6 +92,8 @@ Include a reminder of the main idea in the intial proposal and express interest 
 
             send_email(service, to, f"RE: {subject}", follow_up_body)
 
+
+#add sending to excel spreadsheet  
 if __name__ == "__main__":
     service = authenticate()
     follow_up_logic(service)
