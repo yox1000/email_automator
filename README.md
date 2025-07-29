@@ -3,3 +3,7 @@ add direct to excel pipeline (if you get lead for client, put it into the excel 
 credentials for individual accounts must be added 
 
 add feature if you don't respond to a client after 3 days, then send reminder to admin email to respond, with a link to the thread
+
+if they're just looking at different place, then it's not a LOST LEAD yet (send reply within 3 days)
+
+if they say we had to go to a different company, then add it to lost lead excel sheet, send automatic sympathetic message
