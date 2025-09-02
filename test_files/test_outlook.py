@@ -6,7 +6,6 @@ import datetime
 import requests
 from msal import ConfidentialClientApplication
 
-#Environment variables
 CLIENT_ID = os.getenv("OUTLOOK_CLIENT_ID")
 CLIENT_SECRET = os.getenv("OUTLOOK_CLIENT_SECRET")
 TENANT_ID = os.getenv("OUTLOOK_TENANT_ID")
@@ -64,10 +63,30 @@ def send_email_outlook(access_token, to, subject, body):
     }
     response = requests.post(url, headers=headers, json=email_msg)
     response.raise_for_status()
-    print(f"✅ Follow-up sent to {to}.")
+    print(f"Follow-up sent to {to}.")
 
-# Fetch sent emails from last 2 to 7 days
-def follow_up_logic_outlook(access_token):
+def create_draft_email_outlook(access_token, to, subject, body):
+    url = "https://graph.microsoft.com/v1.0/me/messages"
+    draft_msg = {
+        "subject": subject,
+        "body": {
+            "contentType": "Text",
+            "content": body
+        },
+        "toRecipients": [
+            {"emailAddress": {"address": to}}
+        ],
+        "isDraft": True
+    }
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, headers=headers, json=draft_msg)
+    response.raise_for_status()
+    print(f"📝 Draft created for {to}.")
+
+def follow_up_logic_outlook(access_token, send_email_flag=True):
     now = datetime.datetime.utcnow()
     two_days_ago = now - datetime.timedelta(days=2)
     seven_days_ago = now - datetime.timedelta(days=7)
@@ -96,14 +115,21 @@ def follow_up_logic_outlook(access_token):
 
         classify_prompt = f"Is the following email a business proposal or pitch? Reply only 'Yes' or 'No'.\n\n{body}"
         result = ask_deepseek(classify_prompt).strip().lower()
+
         if "yes" in result:
             followup_prompt = f"""Write a short, polite follow-up email paragraph to a client based on this previous message:
 \"\"\"{body}\"\"\"
 
 Include a reminder of the main idea in the initial proposal and express interest in hearing their thoughts on this initial proposal. Do not directly copy the original message."""
             follow_up_body = ask_deepseek(followup_prompt).strip()
-            send_email_outlook(access_token, to, f"RE: {subject}", follow_up_body)
+
+            if send_email_flag:
+                send_email_outlook(access_token, to, f"RE: {subject}", follow_up_body)
+            else:
+                create_draft_email_outlook(access_token, to, f"RE: {subject}", follow_up_body)
 
 if __name__ == "__main__":
     access_token = authenticate_outlook()
-    follow_up_logic_outlook(access_token)
+    
+    # Set send_email_flag to False to create drafts instead of sending
+    follow_up_logic_outlook(access_token, send_email_flag=False)
